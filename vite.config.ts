@@ -5,6 +5,7 @@ import dts from "vite-plugin-dts";
 import { libInjectCss } from "vite-plugin-lib-inject-css";
 import { glob } from "glob";
 import { fileURLToPath } from "node:url";
+import wasm from 'vite-plugin-wasm';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -19,6 +20,7 @@ export default defineConfig({
       copyDtsFiles: true,
     }),
     libInjectCss(),
+    wasm()
   ],
   build: {
     lib: {
@@ -43,6 +45,11 @@ export default defineConfig({
         assetFileNames: "assets/[name][extname]",
         entryFileNames: "[name].js",
       },
+    },
+  },
+  resolve: {
+    alias: {
+      events: "events",
     },
   },
 });

@@ -9,6 +9,7 @@ export const Chat1 = () => {
   });
   return (
     <Chat
+      url="http://localhost:3030"
       roomId="1"
       beforeSentMessage={() => new Promise((res) => res(true))}
     />

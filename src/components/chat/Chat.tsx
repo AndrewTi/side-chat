@@ -1,35 +1,18 @@
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { socket, URL } from "../utils/socket";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { IMessage } from "../../service/types";
+import { getRoomRequest } from "../../service";
+import { formatDate } from "../../helpers";
 import { v4 as uuidv4 } from "uuid";
-import axios from "axios";
 import "./Chat.css";
-
-const formatDate = (dateString: string) => {
-  // check if the date string is valid
-  const isValidDate = (dateString: string): boolean => {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  };
-
-  if (!isValidDate(dateString)) {
-    return "";
-  }
-
-  //  format the date as am/pm time
-  const formatTime = (date: Date): string => {
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "pm" : "am";
-    hours = hours % 12;
-    hours = hours ? +String(hours).padStart(2, "0") : 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
-
-  const date = new Date(dateString);
-  const formattedTime = formatTime(date);
-
-  return formattedTime;
-};
+import axios from "axios";
+import io from "socket.io-client";
 
 type TStyles = React.CSSProperties;
 interface IChat {
@@ -46,21 +29,16 @@ interface IChat {
   };
   roomId: string;
   beforeSentMessage: (msg: string) => Promise<boolean>;
-}
-interface IUserData {
-  userName: string;
-  avatar: string;
-  _id: string;
+  url: string;
 }
 
-interface IMessage {
-  _id: string;
-  user: IUserData;
-  message: string;
-  createdAt: string;
-}
+export const Chat = ({ styles, roomId, beforeSentMessage, url }: IChat) => {
+  const socket = useMemo(() => io(url), [url]);
 
-export const Chat = ({ styles, roomId, beforeSentMessage }: IChat) => {
+  useEffect(() => {
+    axios.defaults.baseURL = url;
+  }, [url]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -72,7 +50,7 @@ export const Chat = ({ styles, roomId, beforeSentMessage }: IChat) => {
       setError("");
       setIsLoading(true);
 
-      const { data } = await axios.get(`${URL}/chat/${roomId}`);
+      const { data } = await getRoomRequest(roomId);
 
       if (data) {
         setChat(data);
@@ -115,7 +93,7 @@ export const Chat = ({ styles, roomId, beforeSentMessage }: IChat) => {
     return () => {
       socket.off(`chat message ${roomId}`, newMsg);
     };
-  }, [roomId]);
+  }, [roomId, socket]);
 
   const chatRef = useRef<HTMLDivElement | null>(null);
 
@@ -125,7 +103,7 @@ export const Chat = ({ styles, roomId, beforeSentMessage }: IChat) => {
     return () => {
       socket.emit("join room", roomId);
     };
-  }, [roomId]);
+  }, [roomId, socket]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

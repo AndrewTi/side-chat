@@ -1,6 +1,5 @@
-import axios from "axios";
 import { useCallback, useEffect } from "react";
-import { URL } from "../utils/socket";
+import { setUserRequest } from "../service";
 
 interface IUserData {
   userName: string;
@@ -11,10 +10,7 @@ interface IUserData {
 export function useSetUserData(userData: IUserData) {
   const setUserData = useCallback(async () => {
     try {
-      const { data } = await axios.post<IUserData, { data: IUserData }>(
-        `${URL}/user`,
-        userData
-      );
+      const { data } = await setUserRequest(userData);
 
       if (data) {
         localStorage.setItem("user", JSON.stringify(data));
@@ -26,5 +22,5 @@ export function useSetUserData(userData: IUserData) {
 
   useEffect(() => {
     setUserData();
-  }, []);
+  }, [setUserData]);
 }
