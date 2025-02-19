@@ -1,9 +1,14 @@
 import { Stream } from "./components/stream/Stream";
 import "./App.css";
+import { Chat } from "./components/chat/Chat";
 
 function App() {
   return (
     <div className="test">
+      <Chat
+        roomId="1"
+        beforeSentMessage={() => new Promise((res) => { res(true)})}
+      />
       <Stream streamUrl="https://fcc3ddae59ed.us-west-2.playback.live-video.net/api/video/v1/us-west-2.893648527354.channel.DmumNckWFTqz.m3u8" />
       <Stream
         streamUrl="https://fcc3ddae59ed.us-west-2.playback.live-video.net/api/video/v1/us-west-2.893648527354.channel.DmumNckWFTqz.m3u8"
