@@ -137,7 +137,7 @@ export const Chat = ({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
   return (
     <div className="vTrx6SideChat_container" style={styles?.mainBlock}>
       <div className="vTrx6SideChat_scrollView" style={styles?.scrollBlock}>
-        {chat?.map((item) => {
+        {chat && chat.map((item) => {
           return (
             <div
               key={item._id}

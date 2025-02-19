@@ -143,7 +143,7 @@ export function Chat({ styles, roomId, beforeSentMessage, url }: IChat) {
         className={mainStyles.vTrx6SideChat_scrollView}
         style={styles?.scrollBlock}
       >
-        {chat?.map((item) => {
+        {chat && chat.map((item) => {
           return (
             <div
               key={item._id}
