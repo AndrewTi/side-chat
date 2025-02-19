@@ -29,10 +29,10 @@ interface IChat {
   };
   roomId: string;
   beforeSentMessage: (msg: string) => Promise<boolean>;
-  url: string;
+  url?: string;
 }
 
-export const Chat = ({ styles, roomId, beforeSentMessage, url }: IChat) => {
+export const Chat = ({ styles, roomId, beforeSentMessage, url = 'https://chat.r-words.com' }: IChat) => {
   const socket = useMemo(() => io(url), [url]);
 
   useEffect(() => {
