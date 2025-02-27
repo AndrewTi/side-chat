@@ -12,7 +12,7 @@ function App() {
   return (
     <div className="test">
       <Chat
-        url="http://localhost:3030"
+        url="https://chat.r-words.com"
         roomId="123123"
         beforeSentMessage={() => new Promise((res) => res(true))}
       />
@@ -25,7 +25,7 @@ function App() {
         afterUserAnswer={() => new Promise((res) => res(true))}
         config={{ showInTime: 5, answerTime: 5, viewResultTime: 5 }}
         polls={data?.polls}
-        url="http://localhost:3030"
+        url="https://chats.r-words.com"
         currentStreamTime={currentStreamTime}
       />
     </div>

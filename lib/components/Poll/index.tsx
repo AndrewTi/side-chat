@@ -9,7 +9,7 @@ import { Loader } from "../../../src/components/loader/Loader";
 
 export function Poll({
   afterUserAnswer,
-  url = "http://localhost:3030",
+  url = "https://chat.r-words.com",
   config = { showInTime: 60, answerTime: 10, viewResultTime: 10 },
   polls,
   styles,
