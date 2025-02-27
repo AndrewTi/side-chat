@@ -1,26 +1,59 @@
-export const formatDate = (dateString: string) => {
+import { DateTime } from "luxon";
+import { TTimerConfig } from "../types";
+
+export const formatRelativeTime = (timestamp: string) => {
   // check if the date string is valid
   const isValidDate = (dateString: string): boolean => {
     const date = new Date(dateString);
     return !isNaN(date.getTime());
   };
 
-  if (!isValidDate(dateString)) {
+  if (!isValidDate(timestamp)) {
     return "";
   }
 
-  //  format the date as am/pm time
-  const formatTime = (date: Date): string => {
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "pm" : "am";
-    hours = hours % 12;
-    hours = hours ? +String(hours).padStart(2, "0") : 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
+  const now = DateTime.utc();
+  const sentDateTime = DateTime.fromISO(timestamp);
+  const diffInSeconds = now.diff(sentDateTime, "seconds").seconds;
 
-  const date = new Date(dateString);
-  const formattedTime = formatTime(date);
+  if (diffInSeconds < 60) {
+    return `${Math.round(diffInSeconds) || 1} sec ago`;
+  }
 
-  return formattedTime;
+  const diffInMinutes = now.diff(sentDateTime, "minutes").minutes;
+  if (diffInMinutes < 60) {
+    return `${Math.round(diffInMinutes)} min ago`;
+  }
+
+  const diffInHours = now.diff(sentDateTime, "hours").hours;
+  if (diffInHours < 24) {
+    return `${Math.round(diffInHours)} h ago`;
+  }
+
+  const diffInDays = now.diff(sentDateTime, "days").days;
+  if (diffInDays < 7) {
+    return `${Math.round(diffInDays)} d ago`;
+  }
+
+  // More than 1 week, show date as "DD.MM"
+  return sentDateTime.toFormat("dd.MM");
+};
+
+export const countShowPolls = (
+  currentStreamTime: number,
+  config: TTimerConfig,
+  pollsAmount: number
+) => {
+  if (!config) return 0;
+  if (!pollsAmount) return 0;
+
+  const currentTime = Math.floor(currentStreamTime);
+  const countTime =
+    (pollsAmount || 0) * (config?.answerTime + config?.viewResultTime) + 60;
+  const showPolls =
+    currentTime &&
+    ((currentTime > config?.showInTime && currentTime < countTime) ||
+      currentTime === config?.showInTime);
+
+  return showPolls;
 };

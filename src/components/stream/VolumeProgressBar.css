@@ -1,0 +1,32 @@
+.vTrx6Stream_volume-progressContainer {
+  margin-left: 10px;
+  width: 120px;
+  height: 4px;
+  background: #333;
+  border-radius: 1px;
+  position: relative;
+  cursor: pointer;
+}
+
+.vTrx6Stream_volume-progressBar {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.vTrx6Stream_volume-progressRange {
+  height: 100%;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.vTrx6Stream_volume-progressThumb {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: -3px;
+  transform: translateX(-50%);
+  cursor: grab;
+}

@@ -6,33 +6,24 @@ import {
   useRef,
   useState,
 } from "react";
-import { formatDate } from "../../../src/helpers/index";
-import { getRoomRequest } from "../../../src/service";
 import { v4 as uuidv4 } from "uuid";
-import mainStyles from "./styles.module.css";
-import { IMessage } from "../../../src/service/types";
-import { io } from "socket.io-client";
 import axios from "axios";
+import io from "socket.io-client";
+import { LuSend } from "react-icons/lu";
+import mainStyles from "./styles.module.css";
+import { IChatProps } from "../../../src/types";
+import { IMessage } from "../../../src/service/types";
+import { getRoomRequest } from "../../../src/service";
+import { Loader } from "../../../src/components/loader/Loader";
+import { formatRelativeTime } from "../../../src/helpers/index";
 
-type TStyles = React.CSSProperties;
-interface IChat {
-  styles?: {
-    mainBlock?: TStyles;
-    scrollBlock?: TStyles;
-    scrollBlock_messageBlock?: TStyles;
-    scrollBlock_messageBlock_avatar?: TStyles;
-    scrollBlock_messageBlock_title?: TStyles;
-    scrollBlock_messageBlock_message?: TStyles;
-    inputBlock?: TStyles;
-    inputBlock_input?: TStyles;
-    inputBlock_submit?: TStyles;
-  };
-  roomId: string;
-  beforeSentMessage: (msg: string) => Promise<boolean>;
-  url?: string;
-}
-
-export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-words.com' }: IChat) {
+export const Chat = ({
+  styles,
+  roomId,
+  beforeSentMessage,
+  url,
+  submitIcon,
+}: IChatProps) => {
   const socket = useMemo(() => io(url), [url]);
 
   useEffect(() => {
@@ -42,8 +33,9 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [msg, setMsg] = useState("");
   const [chat, setChat] = useState<IMessage[]>([]);
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const getChats = useCallback(async () => {
     try {
@@ -52,7 +44,7 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
 
       const { data } = await getRoomRequest(roomId);
 
-      if (data) {
+      if (Array.isArray(data)) {
         setChat(data);
       }
     } catch (error) {
@@ -64,8 +56,9 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
   }, [roomId]);
 
   useEffect(() => {
+    if (!url.trim()) return setError("Correct url must be provided");
     getChats();
-  }, [getChats]);
+  }, [url, getChats]);
 
   useEffect(() => {
     const newMsg = (msg: string) => {
@@ -108,16 +101,20 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
   const submit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (msg.trim()) {
+    if (inputRef.current?.value.trim()) {
       try {
-        const res = await beforeSentMessage(msg);
+        const res = await beforeSentMessage(inputRef.current.value);
 
         if (res) {
           const userLocal = localStorage.getItem("user");
           const userData = userLocal ? JSON.parse(userLocal) : null;
 
-          socket.emit("chat message", { roomId, message: msg, userData });
-          setMsg("");
+          socket.emit("chat message", {
+            roomId,
+            message: inputRef.current.value,
+            userData,
+          });
+          inputRef.current.value = "";
         }
       } catch (error) {
         console.log(error);
@@ -143,7 +140,7 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
         className={mainStyles.vTrx6SideChat_scrollView}
         style={styles?.scrollBlock}
       >
-        {chat && chat.map((item) => {
+        {chat?.map((item) => {
           return (
             <div
               key={item._id}
@@ -157,7 +154,7 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
                 <img
                   src={
                     item?.user?.avatar ||
-                    "https://i.pinimg.com/736x/ef/1e/35/ef1e355122ed168516114137b555a21f.jpg"
+                    "https://i.pinimg.com/736x/9b/fb/1b/9bfb1bc507a692758bfe14ba837323e0.jpg"
                   }
                   alt="avatar"
                   title="avatar"
@@ -165,39 +162,46 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
                 />
               </div>
 
-              <div className={mainStyles.vTrx6SideChat_messageBlock}>
+              <div
+                className={mainStyles.vTrx6SideChat_messageBlock}
+                style={styles?.scrollBlock_messageBlock_content}
+              >
                 <p
                   className={mainStyles.vTrx6SideChat_title}
                   style={styles?.scrollBlock_messageBlock_title}
                 >
                   {item?.user?.userName}
                 </p>
-                <p
-                  className={mainStyles.vTrx6SideChat_textContent}
-                  style={styles?.scrollBlock_messageBlock_message}
-                >
-                  {item?.message}
 
-                  <span className={mainStyles.vTrx6SideChat_messageDate}>
-                    {formatDate(item?.createdAt)}
-                  </span>
-                </p>
+                <div
+                  className={mainStyles.vTrx6SideChat_messageContainer}
+                  style={styles?.scrollBlock_messageBlock_messageContainer}
+                >
+                  <p
+                    className={mainStyles.vTrx6SideChat_textContent}
+                    style={styles?.scrollBlock_messageBlock_message}
+                  >
+                    {item?.message}
+                  </p>
+                  <p
+                    className={mainStyles.vTrx6SideChat_messageDate}
+                    style={styles?.scrollBlock_messageBlock_timestamp}
+                  >
+                    {formatRelativeTime(item?.createdAt)}
+                  </p>
+                </div>
               </div>
             </div>
           );
         })}
-        {isLoading && (
-          <div className={mainStyles.vTrx6SideChat_loaderContainer}>
-            <div className={mainStyles.vTrx6SideChat_loader} />
-          </div>
-        )}
+
+        {isLoading && <Loader />}
 
         {!isLoading && !error && chat?.length === 0 && (
           <p className={mainStyles.vTrx6SideChat_dummy}>
             Chat history is empty...
           </p>
         )}
-
         {error && <p className={mainStyles.vTrx6SideChat_err}>{error}</p>}
 
         <div ref={chatRef} />
@@ -209,39 +213,27 @@ export function Chat({ styles, roomId, beforeSentMessage, url = 'https://chat.r-
         style={styles?.inputBlock}
       >
         <input
-          value={msg}
-          onChange={(e) => setMsg(e.target.value)}
+          ref={inputRef}
           type="text"
           className={mainStyles.vTrx6SideChat_input}
           placeholder="Message..."
           style={styles?.inputBlock_input}
         />
         <button
+          disabled={!url.trim()}
           type="submit"
           className={mainStyles.vTrx6SideChat_submit}
           style={styles?.inputBlock_submit}
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M10.6281 13.1601L15.4742 8.31397M20.4316 5.35645L16.341 18.651C15.9744 19.8425 15.7909 20.4385 15.4748 20.636C15.2005 20.8074 14.8609 20.836 14.5623 20.7121C14.2178 20.5692 13.9383 20.0111 13.3807 18.8958L10.7897 13.7139C10.7012 13.5369 10.6569 13.4488 10.5978 13.3721C10.5453 13.304 10.4848 13.2427 10.4168 13.1903C10.3418 13.1325 10.2552 13.0892 10.0861 13.0046L4.89224 10.4077C3.77693 9.85006 3.21923 9.57098 3.07632 9.22656C2.95238 8.92787 2.98064 8.588 3.152 8.31375C3.34959 7.99751 3.94555 7.8138 5.13735 7.44709L18.4319 3.35645C19.3689 3.06815 19.8376 2.92412 20.154 3.0403C20.4297 3.1415 20.647 3.35861 20.7482 3.63428C20.8644 3.9506 20.7202 4.41904 20.4322 5.35506L20.4316 5.35645Z"
-              stroke={
-                styles?.inputBlock_submit?.color
-                  ? styles?.inputBlock_submit?.color
-                  : "#00b4e4"
-              }
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {submitIcon || (
+            <LuSend
+              color="#00b4e4"
+              size={24}
+              {...styles?.inputBlock_submitIcon}
             />
-          </svg>
+          )}
         </button>
       </form>
     </div>
   );
-}
+};

@@ -11,8 +11,8 @@ import wasmBinaryPath from "amazon-ivs-player/dist/assets/amazon-ivs-wasmworker.
 
 import { PlayerProgressBar } from "./PlayerProgressBar";
 import { VolumeProgressBar } from "./VolumeProgressBar";
+import { IStreamProps } from "../../types";
 import mainStyles from "./styles.module.css";
-import { IStreamProps } from "../../../src/types";
 
 export const Stream = ({
   streamUrl = "",

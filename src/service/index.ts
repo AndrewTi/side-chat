@@ -1,5 +1,5 @@
 import axios from "axios";
-import { IMessage, IUserData } from "./types";
+import { IMessage, IUserData, IAnswerData } from "./types";
 
 export const setUserRequest = (userData: IUserData) => {
   const res = axios.post<IUserData, { data: IUserData }>("/user", userData);
@@ -9,6 +9,12 @@ export const setUserRequest = (userData: IUserData) => {
 
 export const getRoomRequest = (roomId: string) => {
   const res = axios.get<IMessage[]>(`/chat/${roomId}`);
+
+  return res;
+};
+
+export const setUserAnswer = (answerData: IAnswerData) => {
+  const res = axios.put("/user", answerData);
 
   return res;
 };

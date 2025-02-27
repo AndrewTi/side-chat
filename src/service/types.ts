@@ -10,3 +10,11 @@ export interface IMessage {
   message: string;
   createdAt: string;
 }
+
+export interface IAnswerData {
+  userId: string;
+  answerTime: number;
+  pollId: string;
+  answerId: string | null;
+  isCorrectAnswer: boolean;
+}
