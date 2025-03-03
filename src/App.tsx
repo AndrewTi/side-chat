@@ -9,12 +9,12 @@ import axios from "axios";
 function App() {
   useSetUserData({ userName: "Pipka", _id: "123456789", avatar: "" });
   useEffect(() => {
-    axios.defaults.baseURL = "https://chats.r-words.com";
+    axios.defaults.baseURL = "https://chat.r-words.com";
   }, []);
   return (
     <div className="test">
       <Chat
-        url="https://chats.r-words.com"
+        url="https://chat.r-words.com"
         roomId="123123"
         beforeSentMessage={() => new Promise((res) => res(true))}
       />

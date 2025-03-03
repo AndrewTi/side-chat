@@ -20,7 +20,7 @@ export function Chat({
   styles,
   roomId,
   beforeSentMessage,
-  url,
+  url = 'https://chat.r-words.com',
   submitIcon,
 }: IChatProps) {
   const socket = useMemo(() => io(url), [url]);
