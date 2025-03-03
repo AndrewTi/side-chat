@@ -4,7 +4,7 @@ import { IPollsData } from "../types";
 
 const localInstance = axios.create();
 
-localInstance.defaults.url = 'https://char.r-words.com'
+localInstance.defaults.url = 'https://chat.r-words.com'
 
 export const setUserRequest = (userData: IUserData) => {
   const res = localInstance.post<IUserData, { data: IUserData }>("/user", userData);
