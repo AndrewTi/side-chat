@@ -7,25 +7,25 @@ const localInstance = axios.create();
 localInstance.defaults.url = 'https://char.r-words.com'
 
 export const setUserRequest = (userData: IUserData) => {
-  const res = axios.post<IUserData, { data: IUserData }>("/user", userData);
+  const res = localInstance.post<IUserData, { data: IUserData }>("/user", userData);
 
   return res;
 };
 
 export const getRoomRequest = (roomId: string) => {
-  const res = axios.get<IMessage[]>(`/chat/${roomId}`);
+  const res = localInstance.get<IMessage[]>(`/chat/${roomId}`);
 
   return res;
 };
 
 export const setUserAnswer = (answerData: IAnswerData) => {
-  const res = axios.put("/user", answerData);
+  const res = localInstance.put("/user", answerData);
 
   return res;
 };
 
 export const getPollsRequest = (episodeId: string) => {
-  const res = axios.get<IPollsData>(`/polls/${episodeId}`);
+  const res = localInstance.get<IPollsData>(`/polls/${episodeId}`);
 
   return res;
 };
