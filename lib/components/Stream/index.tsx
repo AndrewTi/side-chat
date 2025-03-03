@@ -9,20 +9,19 @@ import { HiVolumeOff } from "react-icons/hi";
 import wasmWorkerPath from "amazon-ivs-player/dist/assets/amazon-ivs-wasmworker.min.js?url";
 import wasmBinaryPath from "amazon-ivs-player/dist/assets/amazon-ivs-wasmworker.min.wasm?url";
 
+import { IStreamProps } from "../../types";
+import mainStyles from "./styles.module.css";
 import { PlayerProgressBar } from "./PlayerProgressBar";
 import { VolumeProgressBar } from "./VolumeProgressBar";
-import mainStyles from "./styles.module.css";
-import { IStreamProps } from "../../../src/types";
 
-export const Stream = ({
+export function Stream({
   streamUrl = "",
   styles,
   playIcon,
   pauseIcon,
   volumeIcon,
   muteIcon,
-  setCurrentStreamTime,
-}: IStreamProps) => {
+}: IStreamProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [player, setPlayer] = useState<MediaPlayer>();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -44,9 +43,6 @@ export const Stream = ({
 
     ivsPlayer.addEventListener(PlayerEventType.TIME_UPDATE, () => {
       setProgress(ivsPlayer.getPosition());
-      if (setCurrentStreamTime) {
-        setCurrentStreamTime(ivsPlayer.getPosition());
-      }
     });
 
     setPlayer(ivsPlayer);
@@ -55,9 +51,6 @@ export const Stream = ({
       ivsPlayer.pause();
       ivsPlayer.removeEventListener(PlayerEventType.TIME_UPDATE, () => {
         setProgress(ivsPlayer.getPosition());
-        if (setCurrentStreamTime) {
-          setCurrentStreamTime(ivsPlayer.getPosition());
-        }
       });
       ivsPlayer.delete();
     };
@@ -195,4 +188,4 @@ export const Stream = ({
       </div>
     </div>
   );
-};
+}

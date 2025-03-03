@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./VolumeProgressBar.css";
+import mainStyles from "./styles.module.css";
 
 type TStyles = React.CSSProperties;
 
@@ -68,18 +68,21 @@ export const VolumeProgressBar = ({
 
   return (
     <div
-      className="vTrx6Stream_volume-progressContainer"
+      className={mainStyles.vTrx6Stream_volume_progressContainer}
       onClick={(e) => updateProgress(e.clientX)}
       style={styles?.progress}
     >
-      <div className="vTrx6Stream_volume-progressBar" ref={progressBarRef}>
+      <div
+        className={mainStyles.vTrx6Stream_volume_progressBar}
+        ref={progressBarRef}
+      >
         <div
-          className="vTrx6Stream_volume-progressRange"
+          className={mainStyles.vTrx6Stream_volume_progressRange}
           style={{ width: `${progressPercent}%`, ...styles?.progressRange }}
         />
       </div>
       <div
-        className="vTrx6Stream_volume-progressThumb"
+        className={mainStyles.vTrx6Stream_volume_progressThumb}
         style={{ left: `${progressPercent}%`, ...styles?.progressThumb }}
         onMouseDown={() => setIsDragging(true)}
       />

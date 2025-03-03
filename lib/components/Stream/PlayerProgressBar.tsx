@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import "./PlayerProgressBar.css";
+import mainStyles from "./styles.module.css";
 
 type TStyles = React.CSSProperties;
 
@@ -63,18 +63,18 @@ export const PlayerProgressBar = ({
 
   return (
     <div
-      className="vTrx6Stream_progressContainer"
+      className={mainStyles.vTrx6Stream_progressContainer}
       onClick={(e) => updateProgress(e.clientX)}
       style={styles?.progress}
     >
-      <div className="vTrx6Stream_progressBar" ref={progressBarRef}>
+      <div className={mainStyles.vTrx6Stream_progressBar} ref={progressBarRef}>
         <div
-          className="vTrx6Stream_progressRange"
+          className={mainStyles.vTrx6Stream_progressRange}
           style={{ width: `${progressPercent}%`, ...styles?.progressRange }}
         />
       </div>
       <div
-        className="vTrx6Stream_progressThumb"
+        className={mainStyles.vTrx6Stream_progressThumb}
         style={{ left: `${progressPercent}%`, ...styles?.progressThumb }}
         onMouseDown={() => setIsDragging(true)}
       />

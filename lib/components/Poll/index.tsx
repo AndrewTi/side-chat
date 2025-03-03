@@ -1,62 +1,76 @@
-import { useEffect, useState } from "react";
 import mainStyles from "./styles.module.css";
-import axios from "axios";
 import { TimerProgress } from "./TimerProgress";
-import { IQuizProps } from "../../../src/types";
-import { countShowPolls } from "../../../src/helpers";
-import { setUserAnswer } from "../../../src/service";
-import { Loader } from "../../../src/components/loader/Loader";
+import { IChoise, IPoll, IPollsData, IQuizProps } from "../../types";
+import { useCallback, useEffect, useState } from "react";
+import { getPollsRequest, setUserAnswer } from "../../service";
+import { DateTime } from "luxon";
 
-export function Poll({
-  afterUserAnswer,
-  url = "https://chat.r-words.com",
-  config = { showInTime: 60, answerTime: 10, viewResultTime: 10 },
-  polls,
-  styles,
-  currentStreamTime,
-}: IQuizProps) {
-  const showPolls = countShowPolls(currentStreamTime, config, polls?.length);
+export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
+  const [pollsData, setPollsData] = useState<null | IPollsData>(null);
+
+  const getPolls = useCallback(async () => {
+    if (!episodeId) return;
+
+    try {
+      const { data } = await getPollsRequest(episodeId);
+
+      if (data && typeof data === "object") {
+        setPollsData(data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, [episodeId]);
 
   useEffect(() => {
-    if (!showPolls) return;
-    axios.defaults.baseURL = url;
-  }, [url, showPolls]);
+    getPolls();
+  }, [getPolls]);
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const pollsList = pollsData?.polls;
+  const streamStart = pollsData?.streamStartsAt;
 
-  const [curAnswerTimer, setCurAnswerTimer] = useState(config?.answerTime);
-  const [curVewResultTimer, setCurViewResultTimer] = useState(0);
+  const [currentUserTime, setCurrentUserTime] = useState<string>(
+    DateTime.now().toSeconds().toFixed(0)
+  );
 
-  const [currentPoll, setCurrentPoll] = useState<number>(0);
-  const [selected, setSelected] = useState<{
-    choiceId: string;
-    position: string;
-    label: string;
-    correct?: boolean;
-  } | null>(null);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentUserTime(DateTime.now().toSeconds().toFixed(0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const [isShown, setIsShown] = useState<boolean>(false);
+  const [currentQuestion, setCurrentQustion] = useState<IPoll | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<null | IChoise>(null);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
+  const [curAnswerTime, setCurAnswerTime] = useState<number | null>(null);
+  const [curViewResultsTime, setCurViewResultsTime] = useState<number | null>(
+    null
+  );
 
   const saveUserAnswer = async () => {
+    if (!currentQuestion) return;
+
     setIsLoading(true);
+
     try {
       const userLocal = localStorage.getItem("user");
       const userData = userLocal ? JSON.parse(userLocal) : null;
 
-      if (userData) {
-        await afterUserAnswer({
-          answerTime: config?.answerTime - curAnswerTimer,
-          pollId: polls[currentPoll]?.pollId,
-          answerId: selected?.choiceId || null,
-          isCorrectAnswer: !!selected?.correct,
-          userId: userData?._id,
-        });
+      const answerData = {
+        answerTime: currentQuestion?.answerTime - (curAnswerTime || 0),
+        pollId: currentQuestion?.pollId,
+        answerId: selectedAnswer?.choiceId || null,
+        isCorrectAnswer: !!selectedAnswer?.correct,
+        userId: userData?._id,
+      };
 
-        await setUserAnswer({
-          answerTime: config?.answerTime - curAnswerTimer,
-          pollId: polls[currentPoll]?.pollId,
-          answerId: selected?.choiceId || null,
-          isCorrectAnswer: !!selected?.correct,
-          userId: userData?._id,
-        });
+      if (userData) {
+        await afterUserAnswer(answerData);
+        await setUserAnswer(answerData);
       } else {
         console.error("To save answer user data must be provided");
       }
@@ -67,32 +81,75 @@ export function Poll({
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selected) return;
-    setCurAnswerTimer(0);
-  };
+  useEffect(() => {
+    if (!pollsList?.length) return;
+    if (!streamStart) return;
 
-  const next = () => {
-    setSelected(null);
-    setCurAnswerTimer(config?.answerTime);
-    setCurrentPoll(currentPoll + 1);
-  };
+    if (!isShown) {
+      const currentQuestion = pollsList?.find((poll) => {
+        const dateTime = DateTime.fromISO(streamStart);
 
-  const handleNext = () => {
-    next();
-    setCurViewResultTimer(0);
-  };
+        // Add question showIn time
+        const updatedTime = dateTime.plus({ seconds: poll?.showIn });
+
+        return updatedTime.toSeconds().toFixed(0) === currentUserTime
+          ? poll
+          : null;
+      });
+
+      if (currentQuestion) {
+        setIsShown(true);
+        setCurrentQustion(currentQuestion);
+        setCurAnswerTime(currentQuestion?.answerTime);
+      }
+    }
+  }, [pollsList, isShown, currentUserTime, streamStart]);
 
   useEffect(() => {
-    if (!showPolls) return;
-    if (polls.length === currentPoll) return;
-    if (curAnswerTimer === 0) {
-      saveUserAnswer();
-      setCurViewResultTimer(config?.viewResultTime);
+    if (!isShown || !currentQuestion) return;
+    if (curAnswerTime === null || curViewResultsTime) return;
+
+    if (curAnswerTime === 0) {
+      if (!isSubmitted) {
+        saveUserAnswer();
+        setIsSubmitted(true);
+      }
+      setCurViewResultsTime(currentQuestion?.showResultTime);
     }
 
     const interval = setInterval(() => {
-      setCurAnswerTimer((prev) => {
+      setCurAnswerTime((prev) => {
+        if (prev === null) return prev;
+
+        if (prev === 0) {
+          clearInterval(interval);
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isShown, currentQuestion, curViewResultsTime, curAnswerTime]);
+
+  useEffect(() => {
+    if (!isShown || !currentQuestion) return;
+    if (curViewResultsTime === null || curAnswerTime) return;
+
+    if (curViewResultsTime === 0) {
+      setIsShown(false);
+      setCurAnswerTime(null);
+      setCurViewResultsTime(null);
+      setCurrentQustion(null);
+      setSelectedAnswer(null);
+      setIsSubmitted(false);
+    }
+
+    const interval = setInterval(() => {
+      setCurViewResultsTime((prev) => {
+        if (prev === null) return prev;
+
         if (prev === 0) {
           clearInterval(interval);
           return 0;
@@ -102,189 +159,138 @@ export function Poll({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [curAnswerTimer, currentPoll, showPolls]);
+  }, [curAnswerTime, isShown, currentQuestion, curViewResultsTime]);
 
-  useEffect(() => {
-    if (!showPolls) return;
-    if (polls.length === currentPoll) return;
-    if (curAnswerTimer !== 0) return;
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const interval = setInterval(() => {
-      setCurViewResultTimer((prev) => {
-        if (prev === 0) {
-          next();
+  const handleSubmit = () => {
+    if (!currentQuestion) return;
+    setIsSubmitted(true);
+    // setCurAnswerTime(0);
+    saveUserAnswer();
+  };
 
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [curAnswerTimer, currentPoll, showPolls]);
-
-  const isEnd = polls?.length === currentPoll;
-  const [isActive, setIsActive] = useState(true);
-
-  useEffect(() => {
-    if (!showPolls) return;
-    if (isEnd) {
-      setTimeout(() => {
-        setIsActive(false);
-      }, 3000);
-    }
-  }, [isEnd]);
-
-  if (!polls?.length) {
-    console.error("Polls Array is required");
-    return null;
-  }
-
-  if (!isActive) return null;
-  if (!showPolls) return null;
+  if (!isShown) return <></>;
 
   return (
     <div
       className={mainStyles.vTrx6SideChat_container}
       style={styles?.mainBlock}
     >
-      {isEnd ? (
-        <p className={mainStyles.vTrx6SideChat_quizEnd}>
-          That's all. Thank you for answering
-        </p>
-      ) : (
-        <>
-          <div
-            className={mainStyles.vTrx6SideChat_timer}
-            style={styles?.timerBlock}
-          >
-            {!!curAnswerTimer && (
+      <div
+        className={mainStyles.vTrx6SideChat_timer}
+        style={styles?.timerBlock}
+      >
+        {currentQuestion && (
+          <>
+            {!!curAnswerTime && (
               <TimerProgress
                 progressColor="#9ed157"
-                timer={config?.answerTime}
+                timer={currentQuestion?.answerTime}
                 styles={styles?.timerBlock_progress}
               />
             )}
-            {!!curVewResultTimer && (
+            {!!curViewResultsTime && (
               <TimerProgress
                 progressColor="#9257d1"
-                timer={config?.viewResultTime}
+                timer={currentQuestion?.showResultTime}
                 styles={styles?.timerBlock_progress}
               />
             )}
-          </div>
-          <div
-            className={mainStyles.vTrx6SideChat_quiz}
-            style={styles?.pollBlock}
+          </>
+        )}
+      </div>
+      <div className={mainStyles.vTrx6SideChat_quiz} style={styles?.pollBlock}>
+        <div
+          className={mainStyles.vTrx6SideChat_quizHeader}
+          style={styles?.pollBlock_header}
+        >
+          <p
+            className={mainStyles.vTrx6SideChat_quizAmount}
+            style={styles?.pollBlock_headerTitle}
           >
-            <div
-              className={mainStyles.vTrx6SideChat_quizHeader}
-              style={styles?.pollBlock_header}
-            >
-              <p
-                className={mainStyles.vTrx6SideChat_quizAmount}
-                style={styles?.pollBlock_headerTitle}
-              >
-                Question {currentPoll + 1}/{polls?.length}
-              </p>
-              <p
-                className={mainStyles.vTrx6SideChat_quizQuestion}
-                style={styles?.pollBlock_headerQuestion}
-              >
-                {polls[currentPoll]?.question}
-              </p>
-            </div>
-            <div
-              className={mainStyles.vTrx6SideChat_quizBody}
-              style={styles?.pollBlock_body}
-            >
-              <ul
-                className={mainStyles.vTrx6SideChat_quizList}
-                style={styles?.pollBlock_list}
-              >
-                {polls[currentPoll]?.choices?.map((item, i) => {
-                  const isCorrectAnswer = item?.correct;
-                  const currentItem = item?.choiceId;
-                  return (
-                    <li
-                      key={i}
-                      className={mainStyles.vTrx6SideChat_quizListItem}
-                      style={styles?.pollBlock_listItem}
-                    >
-                      <button
-                        onClick={() =>
-                          setSelected((prev) =>
-                            prev?.choiceId === currentItem ? null : item
-                          )
-                        }
-                        className={`${
-                          mainStyles.vTrx6SideChat_quizListButton
-                        } ${
-                          selected === item
-                            ? mainStyles.vTrx6SideChat_quizListButtonActive
-                            : ""
-                        }
+            Question
+          </p>
+          <p
+            className={mainStyles.vTrx6SideChat_quizQuestion}
+            style={styles?.pollBlock_headerQuestion}
+          >
+            {currentQuestion?.question}
+          </p>
+        </div>
+        <div
+          className={mainStyles.vTrx6SideChat_quizBody}
+          style={styles?.pollBlock_body}
+        >
+          <ul
+            className={mainStyles.vTrx6SideChat_quizList}
+            style={styles?.pollBlock_list}
+          >
+            {currentQuestion?.choices?.map((item, i) => {
+              const isCorrectAnswer = item?.correct;
+              const currentItem = item?.choiceId;
+              return (
+                <li
+                  key={i}
+                  className={mainStyles.vTrx6SideChat_quizListItem}
+                  style={styles?.pollBlock_listItem}
+                >
+                  <button
+                    onClick={() =>
+                      setSelectedAnswer((prev) =>
+                        prev?.choiceId === currentItem ? null : item
+                      )
+                    }
+                    className={`${mainStyles.vTrx6SideChat_quizListButton} ${
+                      selectedAnswer?.choiceId === item?.choiceId
+                        ? mainStyles.vTrx6SideChat_quizListButtonActive
+                        : ""
+                    }
                       ${
-                        curAnswerTimer === 0 &&
+                        curAnswerTime === 0 &&
                         (isCorrectAnswer
                           ? mainStyles.vTrx6SideChat_quizListButtonCorrent
-                          : currentItem === selected?.choiceId
+                          : currentItem === selectedAnswer?.choiceId
                           ? mainStyles.vTrx6SideChat_quizListButtonIncorrent
                           : "")
                       }
-        
+
                       `}
-                        disabled={curAnswerTimer === 0 || isLoading}
-                        style={styles?.pollBlock_listItemButton}
-                      >
-                        <div
-                          className={mainStyles.vTrx6SideChat_quizListItemIndx}
-                          style={styles?.pollBlock_listItemButton_indx}
-                        >
-                          {i + 1}
-                        </div>
-                        <div
-                          className={
-                            mainStyles.vTrx6SideChat_quizListItemAnswer
-                          }
-                          style={styles?.pollBlock_listItemButton_choise}
-                        >
-                          {item?.label}
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <div
-                className={mainStyles.vTrx6SideChat_quizCta}
-                style={styles?.pollBlock_cta}
-              >
-                <button
-                  className={mainStyles.vTrx6SideChat_quizCtaBtn}
-                  onClick={handleSubmit}
-                  disabled={!selected || curAnswerTimer === 0 || isLoading}
-                  style={styles?.pollBlock_ctaSubmit}
-                >
-                  submit
-                  {isLoading && <Loader />}
-                </button>
-                {curAnswerTimer === 0 && (
-                  <button
-                    className={mainStyles.vTrx6SideChat_quizCtaBtn}
-                    onClick={handleNext}
-                    disabled={isLoading}
-                    style={styles?.pollBlock_ctaNext}
+                    disabled={curAnswerTime === 0 || isLoading || isSubmitted}
+                    style={styles?.pollBlock_listItemButton}
                   >
-                    next
+                    <div
+                      className={mainStyles.vTrx6SideChat_quizListItemIndx}
+                      style={styles?.pollBlock_listItemButton_indx}
+                    >
+                      {i + 1}
+                    </div>
+                    <div
+                      className={mainStyles.vTrx6SideChat_quizListItemAnswer}
+                      style={styles?.pollBlock_listItemButton_choise}
+                    >
+                      {item?.label}
+                    </div>
                   </button>
-                )}
-              </div>
-            </div>
+                </li>
+              );
+            })}
+          </ul>
+          <div
+            className={mainStyles.vTrx6SideChat_quizCta}
+            style={styles?.pollBlock_cta}
+          >
+            <button
+              className={mainStyles.vTrx6SideChat_quizCtaBtn}
+              onClick={handleSubmit}
+              disabled={isLoading || !curAnswerTime || isSubmitted}
+              style={styles?.pollBlock_ctaSubmit}
+            >
+              submit
+            </button>
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

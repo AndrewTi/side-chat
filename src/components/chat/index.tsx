@@ -9,7 +9,6 @@ import {
 import { IMessage } from "../../service/types";
 import { getRoomRequest } from "../../service";
 import { v4 as uuidv4 } from "uuid";
-import axios from "axios";
 import io from "socket.io-client";
 import { formatRelativeTime } from "../../helpers";
 import { IChatProps } from "../../types";
@@ -25,10 +24,6 @@ export const Chat = ({
   submitIcon,
 }: IChatProps) => {
   const socket = useMemo(() => io(url), [url]);
-
-  useEffect(() => {
-    axios.defaults.baseURL = url;
-  }, [url]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");

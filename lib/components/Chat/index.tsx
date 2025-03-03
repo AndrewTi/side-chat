@@ -6,29 +6,24 @@ import {
   useRef,
   useState,
 } from "react";
+import { IMessage } from "../../service/types";
+import { getRoomRequest } from "../../service";
 import { v4 as uuidv4 } from "uuid";
-import axios from "axios";
 import io from "socket.io-client";
+import { formatRelativeTime } from "../../helpers";
+import { IChatProps } from "../../types";
 import { LuSend } from "react-icons/lu";
+import { Loader } from "../loader/Loader";
 import mainStyles from "./styles.module.css";
-import { IChatProps } from "../../../src/types";
-import { IMessage } from "../../../src/service/types";
-import { getRoomRequest } from "../../../src/service";
-import { Loader } from "../../../src/components/loader/Loader";
-import { formatRelativeTime } from "../../../src/helpers/index";
 
-export const Chat = ({
+export function Chat({
   styles,
   roomId,
   beforeSentMessage,
-  url = 'https://chat.r-words.com',
+  url,
   submitIcon,
-}: IChatProps) => {
+}: IChatProps) {
   const socket = useMemo(() => io(url), [url]);
-
-  useEffect(() => {
-    axios.defaults.baseURL = url;
-  }, [url]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -236,4 +231,4 @@ export const Chat = ({
       </form>
     </div>
   );
-};
+}

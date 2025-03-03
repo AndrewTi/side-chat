@@ -21,7 +21,6 @@ export const Stream = ({
   pauseIcon,
   volumeIcon,
   muteIcon,
-  setCurrentStreamTime,
 }: IStreamProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [player, setPlayer] = useState<MediaPlayer>();
@@ -44,9 +43,6 @@ export const Stream = ({
 
     ivsPlayer.addEventListener(PlayerEventType.TIME_UPDATE, () => {
       setProgress(ivsPlayer.getPosition());
-      if (setCurrentStreamTime) {
-        setCurrentStreamTime(ivsPlayer.getPosition());
-      }
     });
 
     setPlayer(ivsPlayer);
@@ -55,9 +51,6 @@ export const Stream = ({
       ivsPlayer.pause();
       ivsPlayer.removeEventListener(PlayerEventType.TIME_UPDATE, () => {
         setProgress(ivsPlayer.getPosition());
-        if (setCurrentStreamTime) {
-          setCurrentStreamTime(ivsPlayer.getPosition());
-        }
       });
       ivsPlayer.delete();
     };

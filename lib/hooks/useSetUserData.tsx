@@ -1,6 +1,11 @@
 import { useCallback, useEffect } from "react";
-import { IUserData } from "../../src/service/types";
-import { setUserRequest } from "../../src/service";
+import { setUserRequest } from "../service";
+
+interface IUserData {
+  userName: string;
+  avatar: string;
+  _id: string;
+}
 
 export function useSetUserData(userData: IUserData) {
   const setUserData = useCallback(async () => {

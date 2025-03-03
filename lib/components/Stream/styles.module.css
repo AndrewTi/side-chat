@@ -133,3 +133,67 @@ input[type="range"]::-moz-range-thumb {
     opacity: 0;
   }
 }
+
+.vTrx6Stream_progressContainer {
+  height: 4px;
+  background: #333;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  margin-inline: 10px;
+}
+
+.vTrx6Stream_progressBar {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.vTrx6Stream_progressRange {
+  height: 100%;
+  background: #fff;
+}
+
+.vTrx6Stream_progressThumb {
+  position: absolute;
+  top: -4px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.vTrx6Stream_volume_progressContainer {
+  margin-left: 10px;
+  width: 120px;
+  height: 4px;
+  background: #333;
+  border-radius: 1px;
+  position: relative;
+  cursor: pointer;
+}
+
+.vTrx6Stream_volume_progressBar {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.vTrx6Stream_volume_progressRange {
+  height: 100%;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.vTrx6Stream_volume_progressThumb {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: -3px;
+  transform: translateX(-50%);
+  cursor: grab;
+}
