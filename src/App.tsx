@@ -8,14 +8,11 @@ import axios from "axios";
 
 function App() {
   useSetUserData({ userName: "Pipka", _id: "123456789", avatar: "" });
-  useEffect(() => {
-    axios.defaults.baseURL = "https://chat.r-words.com";
-  }, []);
   return (
     <div className="test">
       <Chat
         url="https://chat.r-words.com"
-        roomId="123123"
+        roomId="1"
         beforeSentMessage={() => new Promise((res) => res(true))}
       />
       <Stream streamUrl="https://fcc3ddae59ed.us-west-2.playback.live-video.net/api/video/v1/us-west-2.893648527354.channel.DmumNckWFTqz.m3u8" />

@@ -23,7 +23,7 @@ export function Chat({
   url = 'https://chat.r-words.com',
   submitIcon,
 }: IChatProps) {
-  const socket = useMemo(() => io(url), [url]);
+  const socket = useMemo(() => io(url = 'https://chat.r-words.com'), [url]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
