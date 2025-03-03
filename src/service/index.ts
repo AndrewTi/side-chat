@@ -2,6 +2,10 @@ import axios from "axios";
 import { IMessage, IUserData, IAnswerData } from "./types";
 import { IPollsData } from "../types";
 
+const localInstance = axios.create();
+
+localInstance.defaults.url = 'https://char.r-words.com'
+
 export const setUserRequest = (userData: IUserData) => {
   const res = axios.post<IUserData, { data: IUserData }>("/user", userData);
 
