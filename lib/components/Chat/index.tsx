@@ -16,21 +16,23 @@ import { LuSend } from "react-icons/lu";
 import { Loader } from "../loader/Loader";
 import mainStyles from "./styles.module.css";
 
-export function Chat({
+export const Chat = ({
   styles,
   roomId,
   beforeSentMessage,
-  url = 'https://chat.r-words.com',
+  onInputChange,
+  url,
   submitIcon,
-}: IChatProps) {
-  const socket = useMemo(() => io(url = 'https://chat.r-words.com'), [url]);
+}: IChatProps) => {
+  const socket = useMemo(() => io(url), [url]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isTypingError, setIsTypingError] = useState(false);
   const [error, setError] = useState("");
 
   const [chat, setChat] = useState<IMessage[]>([]);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState("");
 
   const getChats = useCallback(async () => {
     try {
@@ -95,10 +97,11 @@ export function Chat({
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isTypingError) return;
 
-    if (inputRef.current?.value.trim()) {
+    if (message.trim()) {
       try {
-        const res = await beforeSentMessage(inputRef.current.value);
+        const res = await beforeSentMessage(message);
 
         if (res) {
           const userLocal = localStorage.getItem("user");
@@ -106,10 +109,10 @@ export function Chat({
 
           socket.emit("chat message", {
             roomId,
-            message: inputRef.current.value,
+            message,
             userData,
           });
-          inputRef.current.value = "";
+          setMessage("");
         }
       } catch (error) {
         console.log(error);
@@ -208,11 +211,29 @@ export function Chat({
         style={styles?.inputBlock}
       >
         <input
-          ref={inputRef}
+          value={message}
+          onChange={async (e) => {
+            const val = e.target.value;
+            if (isTypingError) setIsTypingError(false);
+
+            if (onInputChange) {
+              try {
+                const res = await onInputChange(val);
+                if (!res) setIsTypingError(true);
+
+                setMessage(val);
+              } catch (error) {
+                console.log(error);
+              }
+            }
+          }}
           type="text"
           className={mainStyles.vTrx6SideChat_input}
           placeholder="Message..."
-          style={styles?.inputBlock_input}
+          style={{
+            ...styles?.inputBlock_input,
+            color: isTypingError ? "#e12a2ad9" : "",
+          }}
         />
         <button
           disabled={!url.trim()}
@@ -231,4 +252,4 @@ export function Chat({
       </form>
     </div>
   );
-}
+};

@@ -13,22 +13,9 @@
   text-align: center;
 }
 
-.vTrx6SideChat_timer {
-  height: 8px;
-  width: 100%;
-  background-color: #eeeeee;
-}
-
 .vTrx6SideChat_timerProgress {
-  height: 8px;
-  animation: roundtime linear forwards;
-  transform-origin: left center;
-}
-
-@keyframes roundtime {
-  to {
-    transform: scaleX(0);
-  }
+  text-align: center;
+  font-size: 2rem;
 }
 
 .vTrx6SideChat_quiz {

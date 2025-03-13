@@ -45,11 +45,29 @@ export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
   const [currentQuestion, setCurrentQustion] = useState<IPoll | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<null | IChoise>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-
   const [curAnswerTime, setCurAnswerTime] = useState<number | null>(null);
   const [curViewResultsTime, setCurViewResultsTime] = useState<number | null>(
     null
   );
+
+  // if user already answered current question show his choise
+  useEffect(() => {
+    const data = localStorage.getItem("answerData");
+    if (data) {
+      const answerData = JSON.parse(data);
+
+      setSelectedAnswer(
+        currentQuestion?.choices?.find((item) => {
+          setIsSubmitted(true);
+          if (item.choiceId === answerData?.answerId) {
+            return item;
+          } else {
+            setIsSubmitted(false);
+          }
+        }) || null
+      );
+    }
+  }, [currentQuestion]);
 
   const saveUserAnswer = async () => {
     if (!currentQuestion) return;
@@ -67,6 +85,8 @@ export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
         isCorrectAnswer: !!selectedAnswer?.correct,
         userId: userData?._id,
       };
+
+      localStorage.setItem("answerData", JSON.stringify(answerData));
 
       if (userData) {
         await afterUserAnswer(answerData);
@@ -86,27 +106,45 @@ export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
     if (!streamStart) return;
 
     if (!isShown) {
-      const currentQuestion = pollsList?.find((poll) => {
-        const dateTime = DateTime.fromISO(streamStart);
+      const dateTime = DateTime.fromISO(streamStart);
 
+      const currentQuestion = pollsList?.find((poll) => {
         // Add question showIn time
         const updatedTime = dateTime.plus({ seconds: poll?.showIn });
+        const updatedTimeSec = updatedTime.toSeconds().toFixed(0);
 
-        return updatedTime.toSeconds().toFixed(0) === currentUserTime
-          ? poll
-          : null;
+        // Period of time, when current poll must be shown
+        const fullTime = updatedTime.plus({ seconds: poll?.answerTime });
+        const fullTimeSec = fullTime.toSeconds().toFixed(0);
+
+        if (
+          +updatedTimeSec < +currentUserTime &&
+          +currentUserTime < +fullTimeSec
+        )
+          return poll;
+        return null;
       });
 
       if (currentQuestion) {
         setIsShown(true);
         setCurrentQustion(currentQuestion);
-        setCurAnswerTime(currentQuestion?.answerTime);
+
+        const currentDate = DateTime.now();
+        const startPollAt = dateTime.plus({ seconds: currentQuestion?.showIn });
+        const endPollAt = startPollAt.plus({
+          seconds: currentQuestion?.answerTime,
+        });
+
+        const difference = endPollAt.diff(currentDate, ["seconds"]);
+        const secondsRemaining = difference.seconds.toFixed(0);
+
+        setCurAnswerTime(+secondsRemaining);
       }
     }
   }, [pollsList, isShown, currentUserTime, streamStart]);
 
   useEffect(() => {
-    if (!isShown || !currentQuestion) return;
+    if (!isShown || !currentQuestion || !streamStart) return;
     if (curAnswerTime === null || curViewResultsTime) return;
 
     if (curAnswerTime === 0) {
@@ -114,7 +152,20 @@ export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
         saveUserAnswer();
         setIsSubmitted(true);
       }
-      setCurViewResultsTime(currentQuestion?.showResultTime);
+      const dateTime = DateTime.fromISO(streamStart);
+
+      const currentDate = DateTime.now();
+      const startViewPollAt = dateTime.plus({
+        seconds: currentQuestion?.showIn + currentQuestion?.answerTime,
+      });
+      const endViewPollAt = startViewPollAt.plus({
+        seconds: currentQuestion?.showResultTime,
+      });
+
+      const difference = endViewPollAt.diff(currentDate, ["seconds"]);
+      const secondsRemaining = difference.seconds.toFixed(0);
+
+      setCurViewResultsTime(+secondsRemaining);
     }
 
     const interval = setInterval(() => {
@@ -166,7 +217,6 @@ export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
   const handleSubmit = () => {
     if (!currentQuestion) return;
     setIsSubmitted(true);
-    // setCurAnswerTime(0);
     saveUserAnswer();
   };
 
@@ -185,15 +235,14 @@ export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
           <>
             {!!curAnswerTime && (
               <TimerProgress
-                progressColor="#9ed157"
-                timer={currentQuestion?.answerTime}
+                timer={curAnswerTime}
                 styles={styles?.timerBlock_progress}
               />
             )}
             {!!curViewResultsTime && (
               <TimerProgress
-                progressColor="#9257d1"
-                timer={currentQuestion?.showResultTime}
+                isResult
+                timer={curViewResultsTime}
                 styles={styles?.timerBlock_progress}
               />
             )}

@@ -58,6 +58,7 @@ export interface IChatProps {
   };
   roomId: string;
   beforeSentMessage: (msg: string) => Promise<boolean>;
+  onInputChange?: (msg: string) => Promise<boolean>;
   url?: string;
   submitIcon?: ReactNode;
 }

@@ -84,8 +84,6 @@ export function Stream({
     }
   };
 
-  useEffect(() => {}, []);
-
   return (
     <div className={mainStyles.vTrx6Stream_stream} style={styles?.mainBlock}>
       <video
