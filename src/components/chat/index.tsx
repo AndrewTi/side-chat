@@ -225,6 +225,8 @@ export const Chat = ({
               } catch (error) {
                 console.log(error);
               }
+            } else {
+              setMessage(val);
             }
           }}
           type="text"
