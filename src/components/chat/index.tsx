@@ -53,7 +53,7 @@ export const Chat = ({
   }, [roomId]);
 
   useEffect(() => {
-    if (!url.trim()) return setError("Correct url must be provided");
+    if (!url?.trim()) return setError("Correct url must be provided");
     getChats();
   }, [url, getChats]);
 
@@ -236,7 +236,7 @@ export const Chat = ({
           }}
         />
         <button
-          disabled={!url.trim()}
+          disabled={!url?.trim()}
           type="submit"
           className={mainStyles.vTrx6SideChat_submit}
           style={styles?.inputBlock_submit}
