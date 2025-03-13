@@ -21,7 +21,7 @@ export const Chat = ({
   roomId,
   beforeSentMessage,
   onInputChange,
-  url,
+  url = 'https://chat.r-words.com',
   submitIcon,
 }: IChatProps) => {
   const socket = useMemo(() => io(url), [url]);

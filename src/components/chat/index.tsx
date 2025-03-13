@@ -53,7 +53,7 @@ export const Chat = ({
   }, [roomId]);
 
   useEffect(() => {
-    if (!url?.trim()) return setError("Correct url must be provided");
+    if (url && !url.trim()) return setError("Correct url must be provided");
     getChats();
   }, [url, getChats]);
 
