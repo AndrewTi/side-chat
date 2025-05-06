@@ -83,8 +83,9 @@ export interface IQuizProps {
     pollBlock_ctaNext?: TStyles;
   };
   artistId: string;
-  episodeId: string;
+  episodeId?: string;
   afterUserAnswer: (data: IAnswerData) => Promise<boolean>;
+  pollsData: IPollsData
 }
 
 export interface IPollsData {

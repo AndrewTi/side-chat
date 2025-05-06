@@ -1,30 +1,11 @@
 import mainStyles from "./styles.module.css";
 import { TimerProgress } from "./TimerProgress";
-import { IChoise, IPoll, IPollsData, IQuizProps } from "../../types";
-import { useCallback, useEffect, useState } from "react";
-import { getPollsRequest, setUserAnswer } from "../../service";
+import { IChoise, IPoll, IQuizProps } from "../../types";
+import { useEffect, useState } from "react";
+import { setUserAnswer } from "../../service";
 import { DateTime } from "luxon";
 
-export function Poll({ afterUserAnswer, episodeId, styles }: IQuizProps) {
-  const [pollsData, setPollsData] = useState<null | IPollsData>(null);
-
-  const getPolls = useCallback(async () => {
-    if (!episodeId) return;
-
-    try {
-      const { data } = await getPollsRequest(episodeId);
-
-      if (data && typeof data === "object") {
-        setPollsData(data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }, [episodeId]);
-
-  useEffect(() => {
-    getPolls();
-  }, [getPolls]);
+export function Poll({ afterUserAnswer, styles, pollsData }: IQuizProps) {
 
   const pollsList = pollsData?.polls;
   const streamStart = pollsData?.streamStartsAt;
