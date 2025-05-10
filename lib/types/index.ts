@@ -82,23 +82,19 @@ export interface IQuizProps {
     pollBlock_ctaSubmit?: TStyles;
     pollBlock_ctaNext?: TStyles;
   };
-  artistId: string;
+  artistId?: string;
   episodeId?: string;
   afterUserAnswer: (data: IAnswerData) => Promise<boolean>;
   pollsData: IPollsData
 }
 
 export interface IPollsData {
-  srcShowId: string;
-  srcEpisodeId: string;
   streamStartsAt: string;
   polls: IPoll[];
 }
 
 export interface IPoll {
-  pollId: string;
   question: string;
-  showId: string;
   showIn: number;
   answerTime: number;
   showResultTime: number;

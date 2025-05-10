@@ -61,7 +61,7 @@ export function Poll({ afterUserAnswer, styles, pollsData }: IQuizProps) {
 
       const answerData = {
         answerTime: currentQuestion?.answerTime - (curAnswerTime || 0),
-        pollId: currentQuestion?.pollId,
+        // pollId: currentQuestion?.pollId,
         answerId: selectedAnswer?.choiceId || null,
         isCorrectAnswer: !!selectedAnswer?.correct,
         userId: userData?._id,

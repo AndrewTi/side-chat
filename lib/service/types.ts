@@ -14,7 +14,6 @@ export interface IMessage {
 export interface IAnswerData {
   userId: string;
   answerTime: number;
-  pollId: string;
   answerId: string | null;
   isCorrectAnswer: boolean;
 }
